@@ -1,2 +1,2 @@
-# ultimate-tic-tac-toe-for-WARP
+# ultimate-tic-tac-toe
 
