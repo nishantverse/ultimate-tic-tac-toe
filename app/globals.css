@@ -1,0 +1,330 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+/* ============================================
+   🎨 PREMIUM DESIGN SYSTEM - OPTIMIZED
+   Ultimate Tic Tac Toe - Performance First
+   ============================================ */
+
+:root {
+  /* Core Colors - Light Mode */
+  --background: oklch(0.98 0.01 280);
+  --foreground: oklch(0.15 0.02 280);
+  
+  --card: oklch(0.99 0.005 280);
+  --card-foreground: oklch(0.15 0.02 280);
+  
+  /* Glassmorphism */
+  --glass: rgba(255, 255, 255, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.3);
+  
+  /* Player X - Electric Blue/Purple */
+  --player-x: oklch(0.6 0.25 265);
+  --player-x-glow: oklch(0.7 0.3 265 / 0.3);
+  --player-x-bg: oklch(0.95 0.05 265);
+  
+  /* Player O - Vibrant Red/Orange */
+  --player-o: oklch(0.6 0.25 25);
+  --player-o-glow: oklch(0.7 0.3 25 / 0.3);
+  --player-o-bg: oklch(0.95 0.05 25);
+  
+  /* UI Elements */
+  --primary: oklch(0.55 0.25 265);
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.96 0.01 280);
+  --secondary-foreground: oklch(0.25 0.02 280);
+  --muted: oklch(0.94 0.01 280);
+  --muted-foreground: oklch(0.5 0.02 280);
+  --accent: oklch(0.55 0.2 265);
+  --accent-foreground: oklch(0.98 0 0);
+  --destructive: oklch(0.55 0.25 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  
+  --border: oklch(0.9 0.01 280);
+  --input: oklch(0.95 0.01 280);
+  --ring: oklch(0.6 0.25 265);
+  
+  /* Forced Board */
+  --forced: oklch(0.65 0.25 145);
+  --forced-glow: oklch(0.7 0.3 145 / 0.4);
+  
+  --radius: 0.75rem;
+  
+  --popover: oklch(0.99 0.005 280);
+  --popover-foreground: oklch(0.15 0.02 280);
+  
+  --sidebar: oklch(0.98 0.01 280);
+  --sidebar-foreground: oklch(0.15 0.02 280);
+  --sidebar-primary: oklch(0.55 0.25 265);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.94 0.01 280);
+  --sidebar-accent-foreground: oklch(0.25 0.02 280);
+  --sidebar-border: oklch(0.9 0.01 280);
+  --sidebar-ring: oklch(0.6 0.25 265);
+  
+  --chart-1: oklch(0.6 0.25 265);
+  --chart-2: oklch(0.6 0.25 25);
+  --chart-3: oklch(0.65 0.25 145);
+  --chart-4: oklch(0.7 0.2 50);
+  --chart-5: oklch(0.6 0.2 300);
+}
+
+.dark {
+  --background: oklch(0.12 0.02 280);
+  --foreground: oklch(0.95 0.01 280);
+  
+  --card: oklch(0.16 0.02 280);
+  --card-foreground: oklch(0.95 0.01 280);
+  
+  --glass: rgba(30, 30, 45, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  
+  --player-x: oklch(0.7 0.25 265);
+  --player-x-glow: oklch(0.6 0.35 265 / 0.4);
+  --player-x-bg: oklch(0.2 0.08 265);
+  
+  --player-o: oklch(0.7 0.25 25);
+  --player-o-glow: oklch(0.6 0.35 25 / 0.4);
+  --player-o-bg: oklch(0.2 0.08 25);
+  
+  --primary: oklch(0.7 0.25 265);
+  --primary-foreground: oklch(0.12 0.02 280);
+  --secondary: oklch(0.22 0.02 280);
+  --secondary-foreground: oklch(0.95 0.01 280);
+  --muted: oklch(0.25 0.02 280);
+  --muted-foreground: oklch(0.65 0.01 280);
+  --accent: oklch(0.7 0.2 265);
+  --accent-foreground: oklch(0.12 0.02 280);
+  --destructive: oklch(0.6 0.25 25);
+  --destructive-foreground: oklch(0.12 0.02 280);
+  
+  --border: oklch(0.28 0.02 280);
+  --input: oklch(0.22 0.02 280);
+  --ring: oklch(0.7 0.25 265);
+  
+  --forced: oklch(0.7 0.25 145);
+  --forced-glow: oklch(0.6 0.35 145 / 0.5);
+  
+  --popover: oklch(0.16 0.02 280);
+  --popover-foreground: oklch(0.95 0.01 280);
+  
+  --sidebar: oklch(0.14 0.02 280);
+  --sidebar-foreground: oklch(0.95 0.01 280);
+  --sidebar-primary: oklch(0.7 0.25 265);
+  --sidebar-primary-foreground: oklch(0.12 0.02 280);
+  --sidebar-accent: oklch(0.22 0.02 280);
+  --sidebar-accent-foreground: oklch(0.95 0.01 280);
+  --sidebar-border: oklch(0.28 0.02 280);
+  --sidebar-ring: oklch(0.7 0.25 265);
+  
+  --chart-1: oklch(0.7 0.25 265);
+  --chart-2: oklch(0.7 0.25 25);
+  --chart-3: oklch(0.7 0.25 145);
+  --chart-4: oklch(0.75 0.2 50);
+  --chart-5: oklch(0.7 0.2 300);
+}
+
+@theme inline {
+  --font-sans: 'Geist', 'Geist Fallback', system-ui, sans-serif;
+  --font-mono: 'Geist Mono', 'Geist Mono Fallback', monospace;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  /* Prevent scrolling */
+  html, body {
+    overflow: hidden;
+    height: 100vh;
+    height: 100dvh;
+  }
+}
+
+/* ============================================
+   ✨ OPTIMIZED ANIMATIONS (GPU-accelerated)
+   Using transform & opacity only for performance
+   ============================================ */
+
+/* Reduce motion for accessibility & performance */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { 
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.8;
+    transform: scale(1.02);
+  }
+}
+
+@keyframes cell-pop {
+  0% { transform: scale(0.8); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* ============================================
+   🎴 GLASSMORPHISM (Simplified for performance)
+   ============================================ */
+
+.glass {
+  background: var(--glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+}
+
+.glass-card {
+  background: var(--glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+.dark .glass-card {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* ============================================
+   🎮 GAME-SPECIFIC STYLES  
+   ============================================ */
+
+.player-x {
+  color: var(--player-x);
+}
+
+.player-x-bg {
+  background-color: var(--player-x-bg);
+}
+
+.player-o {
+  color: var(--player-o);
+}
+
+.player-o-bg {
+  background-color: var(--player-o-bg);
+}
+
+/* Forced Board Glow - Simplified */
+.forced-board {
+  animation: pulse-glow 2s ease-in-out infinite;
+  border-color: var(--forced) !important;
+  box-shadow: 0 0 12px var(--forced-glow);
+}
+
+/* Cell Animation */
+.cell-placed {
+  animation: cell-pop 0.2s ease-out forwards;
+}
+
+/* Gradient Text */
+.gradient-text-x {
+  background: linear-gradient(135deg, oklch(0.6 0.3 250), oklch(0.7 0.25 280));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-o {
+  background: linear-gradient(135deg, oklch(0.65 0.3 15), oklch(0.7 0.25 40));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-title {
+  background: linear-gradient(135deg, var(--player-x), var(--player-o));
+  background-size: 200% 200%;
+  animation: gradient-shift 6s ease infinite;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Mode Card */
+.mode-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  will-change: transform;
+}
+
+.mode-card:hover {
+  transform: translateY(-2px);
+}
+
+/* Button Shine - Simplified */
+.btn-shine {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Background - Static gradient for performance */
+.app-bg {
+  background: linear-gradient(135deg, 
+    var(--background) 0%, 
+    oklch(0.96 0.02 265 / 0.3) 50%, 
+    var(--background) 100%
+  );
+}
+
+.dark .app-bg {
+  background: linear-gradient(135deg, 
+    var(--background) 0%, 
+    oklch(0.15 0.03 265 / 0.3) 50%, 
+    var(--background) 100%
+  );
+}
