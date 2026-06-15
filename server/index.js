@@ -3,12 +3,17 @@ const socketIo = require("socket.io");
 const cors = require("cors");
 
 // Get port from environment or default to 3001
-const PORT = process.env.PORT || 3001;
+const PORT = Number(process.env.PORT) || 3001;
 
-// Create HTTP server
 const server = http.createServer((req, res) => {
-  res.writeHead(200, { "Content-Type": "text/plain" });
-  res.end("Ultimate Tic Tac Toe - Socket.IO Server Running");
+  if (req.method === "GET" && (req.url === "/" || req.url === "/health" || req.url === "/healthz")) {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ ok: true }));
+    return;
+  }
+
+  res.writeHead(404, { "Content-Type": "application/json" });
+  res.end(JSON.stringify({ ok: false, error: "Not Found" }));
 });
 
 // Initialize Socket.IO with CORS
@@ -20,177 +25,223 @@ const io = socketIo(server, {
   transports: ["websocket", "polling"],
 });
 
-// Store rooms and their state
-const rooms = new Map();
+function parseAllowedOrigins(value) {
+  if (!value || value.trim() === "*") {
+    return "*";
+  }
 
-// Helper: Generate Fisher-Yates shuffle mapping
+  return value
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+}
+
+function isValidRoomId(roomId) {
+  return typeof roomId === "string" && /^[a-zA-Z0-9_-]{3,30}$/.test(roomId);
+}
+
 function generateShuffleMapping() {
   const mapping = [0, 1, 2, 3, 4, 5, 6, 7, 8];
-  for (let i = mapping.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [mapping[i], mapping[j]] = [mapping[j], mapping[i]];
+
+    for (let i = mapping.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [mapping[i], mapping[j]] = [mapping[j], mapping[i]];
+    }
+
+    return mapping;
   }
-  return mapping;
-}
 
-// Helper: Check if shuffle should trigger
-function shouldTriggerShuffle(gameState) {
-  if (!gameState || gameState.instabilityTriggered) return false;
-  
-  // Count conquered boards (X or O only, not DRAW)
-  const conqueredCount = gameState.boardStatus.filter(
-    status => status === "X" || status === "O"
-  ).length;
-  
-  return conqueredCount === 3;
-}
+  function shouldTriggerShuffle(gameState) {
+    if (!gameState || gameState.instabilityTriggered) return false;
 
-// Helper: Check if role swap should trigger
-function shouldTriggerRoleSwap(gameState) {
-  return (
-    gameState &&
-    gameState.instabilityTriggered &&
-    !gameState.roleSwapTriggered &&
-    !gameState.gameOver &&
-    gameState.postShuffleMoves === 2
-  );
-}
+    const conqueredCount = gameState.boardStatus.filter(
+      (status) => status === "X" || status === "O"
+    ).length;
 
-// Socket.IO event handlers
-io.on("connection", (socket) => {
-  console.log("New client connected:", socket.id);
-  
-  // Track current room for this socket
-  let currentRoom = null;
+    return conqueredCount === 3;
+  }
 
-  socket.on("join", ({ roomId }) => {
-    // Leave previous game room (but not the socket's personal room)
-    if (currentRoom) {
-      socket.leave(currentRoom);
-      const prevRoom = rooms.get(currentRoom);
-      if (prevRoom) {
-        prevRoom.players = prevRoom.players.filter((id) => id !== socket.id);
-        if (prevRoom.players.length === 0) {
-          rooms.delete(currentRoom);
-        }
-      }
-    }
+  function shouldTriggerRoleSwap(gameState) {
+    return (
+      gameState &&
+      gameState.instabilityTriggered &&
+      !gameState.roleSwapTriggered &&
+      !gameState.gameOver &&
+      gameState.postShuffleMoves === 2
+    );
+  }
 
-    // Join new room
-    socket.join(roomId);
-    currentRoom = roomId;
-
-    // Initialize room if it doesn't exist
-    if (!rooms.has(roomId)) {
-      rooms.set(roomId, {
-        players: [],
-        gameState: null,
-      });
-    }
-
+  function removeSocketFromRoom(rooms, roomId, socketId) {
     const room = rooms.get(roomId);
-    room.players.push(socket.id);
+    if (!room) {
+      return null;
+    }
 
-    console.log(`Player ${socket.id} joined room ${roomId}`);
+    room.players = room.players.filter((id) => id !== socketId);
 
-    // Notify room about new player
-    io.to(roomId).emit("room-status", {
-      players: room.players.length,
-      gameStarted: room.players.length >= 2,
+    if (room.players.length === 0) {
+      rooms.delete(roomId);
+      return null;
+    }
+
+    return room;
+  }
+
+  const server = http.createServer((req, res) => {
+    if (req.method === "GET" && (req.url === "/" || req.url === "/health" || req.url === "/healthz")) {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: true }));
+      return;
+    }
+
+    res.writeHead(404, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ ok: false, error: "Not Found" }));
+  });
+
+  server.keepAliveTimeout = 65000;
+  server.headersTimeout = 66000;
+
+  const io = socketIo(server, {
+    cors: {
+      origin: parseAllowedOrigins(process.env.SOCKET_CORS_ORIGIN),
+      methods: ["GET", "POST"],
+    },
+    transports: ["websocket", "polling"],
+  });
+
+  const rooms = new Map();
+
+  io.on("connection", (socket) => {
+    console.log("New client connected:", socket.id);
+
+    let currentRoom = null;
+
+    socket.on("join", ({ roomId }) => {
+      if (!isValidRoomId(roomId)) {
+        socket.emit("room-error", {
+          message: "Invalid room ID.",
+        });
+        return;
+      }
+
+      if (currentRoom === roomId) {
+        return;
+      }
+
+      if (currentRoom) {
+        socket.leave(currentRoom);
+        removeSocketFromRoom(rooms, currentRoom, socket.id);
+      }
+
+      socket.join(roomId);
+      currentRoom = roomId;
+
+      if (!rooms.has(roomId)) {
+        rooms.set(roomId, {
+          players: [],
+          gameState: null,
+        });
+      }
+
+      const room = rooms.get(roomId);
+      if (!room.players.includes(socket.id)) {
+        room.players.push(socket.id);
+      }
+
+      console.log(`Player ${socket.id} joined room ${roomId}`);
+
+      io.to(roomId).emit("room-status", {
+        players: room.players.length,
+        gameStarted: room.players.length >= 2,
+      });
     });
-  });
 
-  // Handle disconnection
-  socket.on("disconnect", () => {
-    if (currentRoom) {
-      const room = rooms.get(currentRoom);
-      if (room) {
-        room.players = room.players.filter((id) => id !== socket.id);
-        if (room.players.length === 0) {
-          rooms.delete(currentRoom);
-        } else {
-          io.to(currentRoom).emit("room-status", {
-            players: room.players.length,
-            gameStarted: false,
-          });
-        }
+    socket.on("disconnect", () => {
+      if (!currentRoom) {
+        return;
       }
+
+      const room = removeSocketFromRoom(rooms, currentRoom, socket.id);
+      if (room) {
+        io.to(currentRoom).emit("room-status", {
+          players: room.players.length,
+          gameStarted: false,
+        });
+      }
+
       console.log(`Player ${socket.id} disconnected from room ${currentRoom}`);
-    }
-  });
+      currentRoom = null;
+    });
 
-  // Handle game state sync (for checking shuffle and role swap triggers)
-  socket.on("game-state", ({ gameState }) => {
-    if (currentRoom) {
-      const room = rooms.get(currentRoom);
-      if (room) {
-        room.gameState = gameState;
-        
-        // Check if shuffle should trigger on the server
-        if (shouldTriggerShuffle(gameState)) {
-          const shuffleMapping = generateShuffleMapping();
-          console.log(`Triggering chaos swap in room ${currentRoom}:`, shuffleMapping);
-          
-          // Broadcast shuffle to all clients in room
-          io.to(currentRoom).emit("chaos-swap", { shuffleMapping });
-        }
-        
-        // Check if role swap should trigger on the server
-        if (shouldTriggerRoleSwap(gameState)) {
-           console.log(`Triggering role swap in room ${currentRoom}`);
-           // Broadcast role swap to all clients
-           io.to(currentRoom).emit("role-swap");
-        }
+    socket.on("game-state", ({ gameState }) => {
+      if (!currentRoom) {
+        return;
       }
-    }
-  });
 
-  // Handle move
-  socket.on("move", ({ boardIndex, cellIndex }) => {
-    if (currentRoom) {
+      const room = rooms.get(currentRoom);
+      if (!room) {
+        return;
+      }
+
+      room.gameState = gameState;
+
+      if (shouldTriggerShuffle(gameState)) {
+        const shuffleMapping = generateShuffleMapping();
+        console.log(`Triggering chaos swap in room ${currentRoom}:`, shuffleMapping);
+        io.to(currentRoom).emit("chaos-swap", { shuffleMapping });
+      }
+
+      if (shouldTriggerRoleSwap(gameState)) {
+        console.log(`Triggering role swap in room ${currentRoom}`);
+        io.to(currentRoom).emit("role-swap");
+      }
+    });
+
+    socket.on("move", ({ boardIndex, cellIndex }) => {
+      if (!currentRoom) {
+        return;
+      }
+
       console.log(
         `Move in room ${currentRoom}: board ${boardIndex}, cell ${cellIndex}`
       );
-      // Relay move to other players in room
       socket.to(currentRoom).emit("move", { boardIndex, cellIndex });
-    }
-  });
+    });
 
-  // Handle reset
-  socket.on("reset", () => {
-    if (currentRoom) {
+    socket.on("reset", () => {
+      if (!currentRoom) {
+        return;
+      }
+
       console.log(`Reset in room ${currentRoom}`);
       const room = rooms.get(currentRoom);
       if (room) {
-        room.gameState = null; // Clear game state on reset
+        room.gameState = null;
       }
-      // Relay reset to other players in room
-      socket.to(currentRoom).emit("reset");
-    }
-  });
 
-  // Handle leave
-  socket.on("leave", () => {
-    if (currentRoom) {
-      socket.leave(currentRoom);
-      const room = rooms.get(currentRoom);
-      if (room) {
-        room.players = room.players.filter((id) => id !== socket.id);
-        if (room.players.length === 0) {
-          rooms.delete(currentRoom);
-        } else {
-          io.to(currentRoom).emit("room-status", {
-            players: room.players.length,
-            gameStarted: false,
-          });
-        }
+      socket.to(currentRoom).emit("reset");
+    });
+
+    socket.on("leave", () => {
+      if (!currentRoom) {
+        return;
       }
+
+      socket.leave(currentRoom);
+      const room = removeSocketFromRoom(rooms, currentRoom, socket.id);
+
+      if (room) {
+        io.to(currentRoom).emit("room-status", {
+          players: room.players.length,
+          gameStarted: false,
+        });
+      }
+
       console.log(`Player ${socket.id} left room ${currentRoom}`);
       currentRoom = null;
-    }
+    });
   });
-});
 
-server.listen(PORT, () => {
-  console.log(`Socket.IO server listening on port ${PORT}`);
-});
+  server.listen(PORT, "0.0.0.0", () => {
+    console.log(`Socket.IO server listening on port ${PORT}`);
+  });

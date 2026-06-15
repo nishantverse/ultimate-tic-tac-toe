@@ -2,6 +2,7 @@ import { GameState } from "./gameLogic";
 
 let socket: any = null;
 let isConnecting = false;
+const DEFAULT_SOCKET_PORT = 3001;
 
 export interface SocketMessage {
   type: "move" | "reset" | "join" | "leave" | "state";
@@ -20,8 +21,7 @@ export async function initSocket(): Promise<void> {
     // Dynamically import socket.io-client only on client side
     const { io } = await import("socket.io-client");
 
-    const socketUrl =
-      process.env.NEXT_PUBLIC_SOCKET_URL || window.location.origin;
+    const socketUrl = resolveSocketUrl();
     socket = io(socketUrl, {
       transports: ["websocket", "polling"],
       reconnection: true,
@@ -32,6 +32,10 @@ export async function initSocket(): Promise<void> {
 
     socket.on("connect", () => {
       console.log("[Socket] Connected:", socket.id);
+    });
+
+    socket.on("connect_error", (error: Error) => {
+      console.error("[Socket] Connect error:", error.message);
     });
 
     socket.on("disconnect", () => {
@@ -47,6 +51,28 @@ export async function initSocket(): Promise<void> {
   }
 
   isConnecting = false;
+}
+
+function resolveSocketUrl(): string {
+  const envUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
+  if (envUrl) return envUrl;
+
+  if (typeof window === "undefined") {
+    return `http://localhost:${DEFAULT_SOCKET_PORT}`;
+  }
+
+  const { protocol, hostname, port } = window.location;
+  const isLocalHost = hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
+
+  if (isLocalHost) {
+    return `${protocol}//${hostname}:${DEFAULT_SOCKET_PORT}`;
+  }
+
+  console.error(
+    "[Socket] NEXT_PUBLIC_SOCKET_URL is not set. Configure the production Socket.IO endpoint before enabling online mode."
+  );
+
+  return window.location.origin;
 }
 
 /**
